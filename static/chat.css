@@ -1,0 +1,41 @@
+.message {
+    background-color: #eee;
+    border-radius: 10px;
+    padding: 10px;
+    max-width: 600px;
+    margin-top: 20px;
+}
+.display-name {
+    font-weight: bold;
+    font-family: Arial;
+    font-size: 30px;
+    margin: 0px;
+    margin-left: 10px;
+}
+.username {
+    margin-top: 5px;
+    margin-left: 10px;
+    color: #4a4a4a;
+    font-family: Arial;
+}
+.message-header {
+    display: flex;
+}
+.pfp {
+    width: 60px;
+    border: 3px solid #aaa;
+    border-radius: 100%;
+}
+.message-body {
+    margin: 20px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font: 16px Arial;
+}
+.right {
+    margin-left: auto;
+}
+.chatbody {
+    width: 70%;
+    margin: auto;
+}
