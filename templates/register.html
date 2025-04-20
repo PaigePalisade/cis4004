@@ -1,0 +1,39 @@
+<head>
+    <title>Create Account</title>
+    <link rel="stylesheet" href="static/login.css">
+</head>
+<body>
+    <form method = "POST" enctype="multipart/form-data">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+        {% block body %}{% endblock %}
+        <h1>Create New Account</h1>
+        <p>
+            <label for="username">Username: </label>
+            <input type="text" name="username" required/>
+        </p>
+        <p>
+            <label for="displayname">Display Name: </label>
+            <input type="text" name="displayname" required/>
+        </p>
+        <p>
+            <label for="password">Password: </label>
+            <input type="password" name="password" required/>
+        </p>
+        <p>
+            <label for="profile-picture">Profile Picture (optional): </label>
+            <input type="file" name="profile-picture" />
+        </p>
+        <p>
+            <input type="submit" name="submit" value="Create New Account" />
+        </p>
+        <p>Already have an account? <a href="/login">Login here</a></p>
+    </form>
+</body>

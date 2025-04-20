@@ -1,0 +1,32 @@
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="static/login.css">
+    </style>
+</head>
+<body>
+    <form method = "POST">
+        <h1>Login</h1>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+        {% block body %}{% endblock %}
+        <p>
+            <label>Username: </label>
+            <input type="text" name="username" required/>
+        </p>
+        <p>
+            <label>Password: </label>
+            <input type="password" name="password" required/>
+        </p>
+        <p>
+            <input type="submit" name="submit" value="Login" required/>
+        </p>
+        
+        <p>Don't have an account? <a href="/register">Create one here</a></p>
+</body>

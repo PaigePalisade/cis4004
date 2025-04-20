@@ -1,0 +1,16 @@
+User:
+    username
+    display name
+    color
+    password
+
+Room:
+    room id
+    message log
+    password
+
+Message:
+    message id
+    timestamp
+    body
+    sender id

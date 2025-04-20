@@ -6,6 +6,7 @@ socket.on('connect', function () {
 
 socket.on('backlog', function(data) {
     let arr = JSON.parse(data);
+    document.getElementById("chatbody").innerHTML = "";
     for (let i = 0; i < arr.length; i++) {
         let username = arr[i].username;
         let message = arr[i].message;
@@ -27,7 +28,5 @@ socket.on('newMessage', function (data) {
 
 function sendMessage() {
     var message = document.getElementById('message').value;
-    var username = document.getElementById('username').value;
-    var response = JSON.stringify({'username': username, 'message': message});
-    socket.emit('message', response);
+    socket.emit('message', message);
 }
