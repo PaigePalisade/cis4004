@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <head>
     <title>Start Chatting</title>
     <link rel="stylesheet" href="/static/style.css">
@@ -25,7 +26,7 @@
         </p>
         <div class="message-header">
             <div>
-                <img src="static/pfp/{{username}}.webp" class="pfp">
+                <img src="/static/pfp/{{username}}.webp" class="pfp">
             </div>
             <div>
                 <p class="display-name">
@@ -37,4 +38,5 @@
             </div>
         </div>
         <p>Something not right? <a href="{{url_for('update')}}">Update your profile here</a></p>
+        <p>Not you? <a href="{{url_for('login')}}">Switch Accounts</a></p>
 </body>

@@ -55,16 +55,19 @@ a {
     font-size: 30px;
     margin: 0px;
     margin-left: 10px;
+    width:max-content;
 }
 .username {
     margin-top: 5px;
     margin-left: 10px;
     color: #4a4a4a;
     font-family: Arial;
+    width:max-content;
 }
 .message-header {
     display: flex;
     text-align: left;
+    flex: 1;
 }
 .pfp {
     width: 60px;
@@ -83,4 +86,90 @@ a {
 .chatbody {
     width: 70%;
     margin: auto;
+}
+.send-div {
+    margin: auto;
+    width: 100%;
+    padding: 0px 20px;
+    display: flex;
+}
+.send-box {
+    height: auto;
+    flex: 1;
+    margin-right: 10px;
+}
+.send-button {
+    background-color: #09f;
+    color: white;
+    padding: 10px 15px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font: 20px Arial;
+}
+hr {
+    border: 5px solid #aaa;
+    border-radius: 5px;
+}
+.header {
+    position: fixed; 
+    top: 0;
+    left: 0;
+    right: 0;
+    height: fit-content;
+    background-color: white;
+    padding: 0px 20px;
+    display: flex;
+    font: Arial bold 20px;
+    background-color: #eee;
+}
+.footer {
+    position: fixed; 
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: fit-content;
+    background-color: white;
+    padding: 0px 20px;
+    padding-top: 0px;
+}
+.spacer {
+    height: 100px;
+}
+h1 {
+    font-family: Arial;
+    margin-right: 20px;
+    flex: 1;
+}
+.link-button {
+    background-color: #09f;
+    color: white;
+    height: fit-content;
+    display: flex;
+    margin: auto;
+    align-items: center;
+    margin-left: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: Arial;
+    font-size: 20px;
+}
+.back-button {
+    background-color: #09f;
+    color: white;
+    padding: 15px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font: 20px Arial;
+    align-content: left;
+}
+.time {
+    text-align: right;
+    margin-left: auto;
+    font-family: Arial;
+    font-size: 15px;
+    color: #4a4a4a;
 }

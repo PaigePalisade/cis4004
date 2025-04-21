@@ -3,49 +3,40 @@ from flask import Flask, render_template, request, session, flash, redirect, url
 from flask_socketio import SocketIO, join_room
 import json
 
-from sqlalchemy import Integer, String
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
 from passlib.hash import sha256_crypt
 
 from PIL import Image
 
-class Base(DeclarativeBase):
-    pass
+import re
 
-db = SQLAlchemy(model_class=Base)
+from models import User, Message, Room, db
+
+from time import time
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with your own secret key
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
+
 db.init_app(app)
-
-class Message(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str]
-    body: Mapped[str]
-    room: Mapped[str]
-
-class User(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(unique=True)
-    display_name: Mapped[str]
-    password: Mapped[str]
-
-class Room(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(unique=True)
-
 with app.app_context():
     db.create_all()
-    
+
 socketio = SocketIO(app)
 
 @app.route('/', methods=['GET', 'POST'])
 def landing():
     if 'user_id' not in session:
+        return redirect(url_for("login"))
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.pop('user_id')
+        flash("There was an erorr reading your session, please login again")
         return redirect(url_for("login"))
     if request.method == 'POST':
         roomname = request.form['room'].lower()
@@ -53,8 +44,8 @@ def landing():
         if len(roomname) < 1 or len(roomname) > 20:
             flash("Room name must be between 1 and 20 characters")
             error = True
-        if not roomname.isalpha:
-            flash("Room name must only contain English letters")
+        if not re.match("^[a-z-]*$", roomname):
+            flash("Room name must only contain English letters or dashes")
             error = True
         if error:
             return redirect(url_for('landing'))
@@ -99,8 +90,8 @@ def register():
         if len(password) < 5 or len(password) > 20:
             flash("Password must be between 5 and 20 characters")
             error = True
-        if not username.isalpha():
-            flash("Username must only contain english letters")
+        if not re.match("^[a-z-]*$", username):
+            flash("Username must only contain english letters or dashes")
             error = True
         if User.query.filter_by(username=username).first():
             flash("Username already exists (not case sensitive)")
@@ -109,7 +100,7 @@ def register():
             file = request.files['profile-picture']
             try:
                 pfp = Image.open(file)
-                pfp.resize((70,70))
+                pfp = pfp.resize((70,70))
             except:
                 flash("Could not read pfp")
                 error = True
@@ -182,7 +173,7 @@ def update():
             file = request.files['profile-picture']
             try:
                 pfp = Image.open(file)
-                pfp.resize((70,70))
+                pfp = pfp.resize((70,70))
                 pfp.save(f"static/pfp/{User.query.get(session['user_id']).username}.webp")
             except:
                 flash("Could not read pfp")
@@ -223,15 +214,13 @@ def handle_connect():
 
 @socketio.on('getBacklog')
 def get_backlog(roomname):
-    print(roomname)
     join_room(roomname)
     messages = db.session.execute(db.select(Message).filter_by(room=roomname))
     chatlog = []
     for msg in messages:
-        display_name = User.query.filter_by(username=msg[0].username).first().display_name
-        chatlog.append({"username": msg[0].username, "body": msg[0].body, 'displayname': display_name})
+        user = User.query.filter_by(username=msg[0].username).first()
+        chatlog.append({"username": msg[0].username, "body": msg[0].body, 'displayname': user.display_name, 'timestamp': msg[0].timestamp})
     socketio.emit('backlog', json.dumps(chatlog), to=request.sid)
-    
 
 @socketio.on('message')
 def handle_message(data):
@@ -243,13 +232,13 @@ def handle_message(data):
 
     if 'user_id' in session and Room.query.filter_by(name=roomname).first():
         
-        msg = Message(username=User.query.get(session['user_id']).username,body=body, room=roomname)
+        msg = Message(username=User.query.get(session['user_id']).username,body=body, room=roomname, timestamp=int(time() * 1000))
         db.session.add(msg)
         db.session.commit()
 
         display_name = User.query.get(session['user_id']).display_name
 
-        socketio.emit('newMessage', json.dumps({'username': msg.username, 'body': msg.body, 'displayname': display_name}), to=roomname)
+        socketio.emit('newMessage', json.dumps({'username': msg.username, 'body': msg.body, 'displayname': display_name, 'timestamp': msg.timestamp}), to=roomname)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

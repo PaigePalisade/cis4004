@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <head>
     <title>Update Profile</title>
     <link rel="stylesheet" href="/static/style.css">
@@ -14,6 +15,7 @@
         {% endif %}
         {% endwith %}
         {% block body %}{% endblock %}
+        <button onclick="window.history.back()" class="back-button">Go Back</button>
         <h1>Update Your Profile</h1>
         <p>
             <label for="displayname">Display Name: </label>

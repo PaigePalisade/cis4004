@@ -13,30 +13,46 @@ socket.on('backlog', function(data) {
     let arr = JSON.parse(data);
     document.getElementById("chatbody").innerHTML = "";
     for (let i = 0; i < arr.length; i++) {
-        // let username = arr[i].username;
-        // let body = arr[i].body;
-        // const messageParagraph = document.createElement('p');
-        // messageParagraph.textContent = username + ": " + body;
-        // document.getElementById("chatbody").appendChild(messageParagraph);
         addMessageToBody(arr[i]);
     }
 });
 
 socket.on('newMessage', function (data) {
-    console.log('Server says: ' + data);
     let obj = JSON.parse(data);
     addMessageToBody(obj);
 });
 
 function sendMessage() {
     var message = document.getElementById('message').value;
-    socket.emit('message', JSON.stringify({'body': message, 'roomname': roomname}));
+    if (message != "") {
+        document.getElementById('message').value = '';
+        socket.emit('message', JSON.stringify({'body': message, 'roomname': roomname}));
+    }
+}
+
+function checkSubmit(e) {
+    if(e && e.keyCode == 13) {
+        sendMessage();
+    }
+}
+
+// https://stackoverflow.com/a/5774055
+function pad(d) {
+    return (d < 10) ? '0' + d.toString() : d.toString();
 }
 
 function addMessageToBody(obj) {
     let username = obj.username;
     let body = obj.body;
     let display_name = obj.displayname;
+    let date = new Date(obj.timestamp);
+    let timeStr = date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+
+    console.log("scroll height: " + document.body.scrollHeight);
+    console.log("inner height: " + window.innerHeight);
+    console.log("scroll y: " + window.scrollY);
+
+    let isScrolled = window.innerHeight + window.scrollY >= document.body.scrollHeight;
 
     let mainDiv = document.createElement('div');
     mainDiv.className = 'message';
@@ -56,8 +72,14 @@ function addMessageToBody(obj) {
     usernameP.textContent = '@' + username;
     nameDiv.appendChild(displayNameP);
     nameDiv.appendChild(usernameP);
+    let timeDiv = document.createElement('div');
+    timeDiv.className = 'time';
+    let timeP = document.createElement('p');
+    timeP.textContent = timeStr;
+    timeDiv.appendChild(timeP);
     messageHeader.appendChild(pfpDiv);
     messageHeader.appendChild(nameDiv);
+    messageHeader.appendChild(timeDiv);
     let messageBodyP = document.createElement('p');
     messageBodyP.className = 'message-body';
     messageBodyP.textContent = body;
@@ -67,5 +89,8 @@ function addMessageToBody(obj) {
 
     if (username != user) {
         mainDiv.classList.add("right");
+    }
+    if (isScrolled) {
+        window.scrollTo(0, document.body.scrollHeight);
     }
 }
