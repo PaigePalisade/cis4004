@@ -88,3 +88,9 @@ Run the Discord bot with
 Use the generate OAuth link to invite the bot into a Discord server (What Discord calls group chats with multiple channels, not an actual server)
 
 run the command through the Discord chat interface `/bindchannel [roomname]` with [roomname] being replaced with a valid room created in the web app
+
+### ChatGPT logs
+I mostly coded this by hand with some short snipets from documentation sources, the textbook, and stack overflow, however I did use ChatGPT to answer some simple questions and generate some code snipets.
+- https://chatgpt.com/share/68073c1b-d168-8008-b317-b5a10a7abc05
+- https://chatgpt.com/share/68073c3d-bd8c-8008-92ed-cc5365e5c30c
+- https://chatgpt.com/share/68073c0b-6204-8008-84b0-d4889e10b769
