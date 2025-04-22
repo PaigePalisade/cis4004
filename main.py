@@ -16,8 +16,6 @@ from time import time
 import os
 from dotenv import load_dotenv
 
-import asyncio
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -35,9 +33,9 @@ if not os.path.isdir('static/pfp'):
 socketio = SocketIO(app)
 
 @app.route('/', methods=['GET', 'POST'])
-def landing():
+def room_select():
     if 'user_id' not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("welcome"))
     user = User.query.get(session['user_id'])
     if not user:
         session.pop('user_id')
@@ -53,7 +51,7 @@ def landing():
             flash("Room name must only contain English letters or dashes")
             error = True
         if error:
-            return redirect(url_for('landing'))
+            return redirect(url_for('room_select'))
         room = Room.query.filter_by(name=roomname).first()
         if not room:
             db.session.add(Room(name=roomname))
@@ -62,7 +60,14 @@ def landing():
         
         
     user = User.query.get(session['user_id'])
-    return render_template('index.html', username=user.username, display_name=user.display_name)
+    return render_template('roomselect.html', username=user.username, display_name=user.display_name)
+
+@app.route('/welcome')
+def welcome():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    return render_template('welcome.html', user=user)
 
 @app.route('/room/<roomname>')
 def chat(roomname):
@@ -122,14 +127,14 @@ def register():
         # using webp to annoy people
         pfp.save(f"static/pfp/{username}.webp")
         session['user_id'] = usr.id
-        return redirect('/')
+        return redirect(url_for('room_select'))
         
     return render_template('register.html')
 
 @app.route('/logout')
 def logout():
     session.pop('user_id')
-    return redirect(url_for('login'))
+    return redirect(url_for('welcome'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -156,7 +161,7 @@ def login():
                 error = True
             if not error:
                 session['user_id'] = user.id
-                return redirect('/')
+                return redirect(url_for('room_select'))
         return redirect(url_for('login'))
     return render_template('login.html')
 
@@ -185,7 +190,7 @@ def update():
                 error = True
         if error:
             return redirect(url_for('update'))
-        return redirect('/')
+        return redirect(url_for('room_select'))
     display_name = User.query.get(session['user_id']).display_name
     return render_template('update.html', display_name=display_name)
 

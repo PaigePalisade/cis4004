@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1 class="title">Chat4004</h1>
+    <div class="description">
+        <p>
+            Chat4004 is a simple messaging application built on Flask and socket.io. It is fast and even has support for communicating with Discord, another messaging service.
+            Start messaging with your free account today!
+        </p>
+       <p><img src="static/screenshot.png" width="400px" height="401px" class="bordered-image"></p>
+    </div>
+    <br>
+    <div class="description">
+        {% if user %}
+            <p>You are logged in as {{user.username}}</p>
+            <br>
+            <p><a class="back-button" href="{{url_for('room_select')}}">Start Chatting!</a></p>
+            <br>
+            <p><a href="{{url_for('logout')}}" class="back-button">Logout</a></p>
+            <br>
+        {% else %}
+            <p><a class="back-button" href="{{url_for('login')}}">Login!</a><a class="back-button" href="{{url_for('register')}}">Create an Account!</a></p>
+        {% endif %}
+    </div>
+</body>

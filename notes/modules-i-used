@@ -3,6 +3,6 @@ flask-socketio
 flask-sqlalchemy
 passlib
 pillow
-py-cord
 dotenv
+py-cord
 "python-socketio[asyncio_client]"
