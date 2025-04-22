@@ -5,3 +5,4 @@ passlib
 pillow
 py-cord
 dotenv
+"python-socketio[asyncio_client]"

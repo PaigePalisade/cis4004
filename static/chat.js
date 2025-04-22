@@ -47,6 +47,7 @@ function addMessageToBody(obj) {
     let display_name = obj.displayname;
     let date = new Date(obj.timestamp);
     let timeStr = date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+    let pfpAddr = obj.pfp;
 
     console.log("scroll height: " + document.body.scrollHeight);
     console.log("inner height: " + window.innerHeight);
@@ -61,7 +62,7 @@ function addMessageToBody(obj) {
     let pfpDiv = document.createElement('div');
     let pfp = document.createElement('img');
     pfp.className = 'pfp'
-    pfp.src = '/static/pfp/' + username + '.webp';
+    pfp.src = pfpAddr;
     pfpDiv.appendChild(pfp);
     let nameDiv = document.createElement('div');
     let displayNameP = document.createElement('p');

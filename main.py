@@ -9,12 +9,14 @@ from PIL import Image
 
 import re
 
-from models import User, Message, Room, db
+from models import ExternalMessage, User, Message, Room, Bridge, db
 
 from time import time
 
 import os
 from dotenv import load_dotenv
+
+import asyncio
 
 load_dotenv()
 
@@ -26,6 +28,9 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 db.init_app(app)
 with app.app_context():
     db.create_all()
+
+if not os.path.isdir('static/pfp'):
+    os.mkdir('static/pfp')
 
 socketio = SocketIO(app)
 
@@ -216,10 +221,14 @@ def handle_connect():
 def get_backlog(roomname):
     join_room(roomname)
     messages = db.session.execute(db.select(Message).filter_by(room=roomname))
+    external_messages = db.session.execute(db.select(ExternalMessage).filter_by(room=roomname))
     chatlog = []
     for msg in messages:
         user = User.query.filter_by(username=msg[0].username).first()
-        chatlog.append({"username": msg[0].username, "body": msg[0].body, 'displayname': user.display_name, 'timestamp': msg[0].timestamp})
+        chatlog.append({"username": msg[0].username, "body": msg[0].body, 'displayname': user.display_name, 'timestamp': msg[0].timestamp, 'pfp': f'/static/pfp/{msg[0].username}.webp'})
+    for msg in external_messages:
+        chatlog.append({"username": msg[0].username, "body": msg[0].body, 'displayname': msg[0].display_name, 'timestamp': msg[0].timestamp, 'pfp': msg[0].pfp})
+    chatlog.sort(key = lambda x: x['timestamp'])
     socketio.emit('backlog', json.dumps(chatlog), to=request.sid)
 
 @socketio.on('message')
@@ -232,13 +241,67 @@ def handle_message(data):
 
     if 'user_id' in session and Room.query.filter_by(name=roomname).first():
         
-        msg = Message(username=User.query.get(session['user_id']).username,body=body, room=roomname, timestamp=int(time() * 1000))
+        msg = Message(username=User.query.get(session['user_id']).username, body=body, room=roomname, timestamp=int(time() * 1000))
         db.session.add(msg)
         db.session.commit()
 
         display_name = User.query.get(session['user_id']).display_name
 
-        socketio.emit('newMessage', json.dumps({'username': msg.username, 'body': msg.body, 'displayname': display_name, 'timestamp': msg.timestamp}), to=roomname)
+        socketio.emit('newMessage', json.dumps({'username': msg.username, 'body': msg.body, 'displayname': display_name, 'timestamp': msg.timestamp, 'pfp': f'/static/pfp/{msg.username}.webp'}), to=roomname)
+        bridges = Bridge.query.filter_by(internal_channel=roomname)
+        for bridge in bridges:
+            socketio.emit('new-discord-message', json.dumps({'body': msg.body, 'display_name': display_name, 'pfp': 'https://docs.pycord.dev/en/stable/_static/pycord_logo.png', 'channel': bridge.external_channel, 'webhook': bridge.webhook}), to='$discord')
+
+
+# interfacing with discord bot
+@socketio.on('discord-message')
+def handle_discord_message(data):
+    if request.root_url != 'http://localhost:5000/':
+        print('Discord bot not local')
+        return
+    obj = json.loads(data)
+    bridges = Bridge.query.filter_by(external_channel=obj['channel'])
+    for bridge in bridges:
+        roomname = bridge.internal_channel
+        msg = ExternalMessage(username=obj['username'], display_name=obj['display_name'], pfp=obj['pfp'], body=obj['body'], room=roomname, timestamp=int(time() * 1000))
+        db.session.add(msg)
+        db.session.commit()
+        socketio.emit('newMessage', json.dumps({'username': f'{msg.username}@discord', 'body': msg.body, 'displayname': msg.display_name, 'timestamp': msg.timestamp, 'pfp': msg.pfp}), to=roomname)
+
+
+@socketio.on('create-bridge')
+def create_bridge(data):
+    if request.root_url != 'http://localhost:5000/':
+        print('Discord bot not local')
+        return
+    obj = json.loads(data)
+    if Room.query.filter_by(name=obj['internal_channel']).first():
+        bridge = Bridge(internal_channel=obj['internal_channel'], external_channel=obj['external_channel'], webhook=obj['webhook'])
+        db.session.add(bridge)
+        db.session.commit()
+        return 'Success'
+    else:
+        return 'Failed to create bridge, make sure the room name is correct'
+    
+@socketio.on('remove-bridge')
+def remove_bridge(data):
+    if request.root_url != 'http://localhost:5000/':
+        print('Discord bot not local')
+        return
+    bridges = Bridge.query.filter_by(external_channel=data)
+    for bridge in bridges:
+        db.session.delete(bridge)
+        db.session.commit()
+    return 'Success'
+
+@socketio.on('discord-init')
+def discord_init(data):
+    if request.root_url != 'http://localhost:5000/':
+        print('Discord bot not local')
+        return
+    # dollar sign is invalid for room name, so this won't conflict
+    join_room('$discord')
+
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
