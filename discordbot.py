@@ -23,19 +23,17 @@ async def on_ready():
     await sio.connect('http://localhost:5000')
     await sio.emit('discord-init', '')
 
+# receives a message from Discord and sends it to the web app
 @bot.event
 async def on_message(message):
     # webhooks do not have a display name
     if message.author.global_name:
-        await sio.emit('discord-message', json.dumps({'username': message.author.name, 'display_name': message.author.display_name, 'pfp': message.author.avatar.url, 'body': message.content, 'channel': str(message.channel.id)}))
+        pfp = '/static/default_pfp.png'
+        if message.author.avatar:
+            pfp = message.author.avatar.url
+        await sio.emit('discord-message', json.dumps({'username': message.author.name, 'display_name': message.author.display_name, 'pfp': pfp, 'body': message.content, 'channel': str(message.channel.id)}))
 
-async def send_discord_message(display_name, pfp, body, channel, webhook):
-    webhook = await bot.fetch_webhook(int(webhook))
-    if not webhook:
-        webhook = await bot.fetch_channel(int(channel)).channel.create_webhook(name="temp webhook")
-    await webhook.send(content=body, username=display_name, avatar_url=pfp)
-    return webhook
-
+# tells the web app to register a bridge between a room and a Discord channel
 @bot.slash_command(name="bindchannel", description="bind channel to webhook")
 async def bindchannel(ctx: discord.ApplicationContext, room: str):
     future = asyncio.get_event_loop().create_future()
@@ -45,6 +43,7 @@ async def bindchannel(ctx: discord.ApplicationContext, room: str):
     await sio.emit('create-bridge', json.dumps({'internal_channel': room, 'external_channel': ctx.channel_id, 'webhook': webhook}), callback=ack_callback)
     await ctx.respond(await future)
 
+# tells the web app to remove all bridges with a discord channel id
 @bot.slash_command(name='unbind', description='unbind all bridges to this channel')
 async def unbind(ctx: discord.ApplicationContext):
     future = asyncio.get_event_loop().create_future()
@@ -53,6 +52,7 @@ async def unbind(ctx: discord.ApplicationContext):
     await sio.emit('remove-bridge', str(ctx.channel_id), callback=ack_callback)
     await ctx.respond(await future)
 
+# receives a message from the web app and sends it to Discord
 @sio.on('new-discord-message')
 async def echoMessage(data):
     obj = json.loads(data)
