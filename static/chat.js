@@ -1,4 +1,4 @@
-var socket = io.connect('http://' + document.domain + ':' + location.port);
+var socket = io.connect(location.origin);
 var user = "";
 var roomname = "";
 
@@ -6,11 +6,13 @@ socket.on('connect', function () {
     console.log('Connected to the server');
     user = document.getElementById("username").textContent;
     roomname = document.getElementById("roomname").textContent;
+    // when first connecting to the server, get the backlog of messages
     socket.emit('getBacklog', roomname);
 });
 
 socket.on('backlog', function(data) {
     let arr = JSON.parse(data);
+    // clear any messages, then fill them back up
     document.getElementById("chatbody").innerHTML = "";
     for (let i = 0; i < arr.length; i++) {
         addMessageToBody(arr[i]);
@@ -23,6 +25,7 @@ socket.on('newMessage', function (data) {
 });
 
 function sendMessage() {
+    // clear the message field, then send
     var message = document.getElementById('message').value;
     if (message != "") {
         document.getElementById('message').value = '';
@@ -30,6 +33,7 @@ function sendMessage() {
     }
 }
 
+// check if the user has pressed the enter key
 function checkSubmit(e) {
     if(e && e.keyCode == 13) {
         sendMessage();
@@ -37,22 +41,24 @@ function checkSubmit(e) {
 }
 
 // https://stackoverflow.com/a/5774055
+// adds a leading 0 if the value is less than 10, to aid in formatting the date
 function pad(d) {
     return (d < 10) ? '0' + d.toString() : d.toString();
 }
 
+// adds a message to the HTML DOM, I don't know if there is an easier way of doing this lol
+// just creates a bunch of HTML elements, sets their data, parents them, and adds them to the DOM
 function addMessageToBody(obj) {
     let username = obj.username;
     let body = obj.body;
     let display_name = obj.displayname;
+    // format the time YYYY-MM-DD HH:MM (24 hour time because parsing am/pm is a few more lines)
+    // Year-month-day is disambiguous
     let date = new Date(obj.timestamp);
     let timeStr = date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
     let pfpAddr = obj.pfp;
 
-    console.log("scroll height: " + document.body.scrollHeight);
-    console.log("inner height: " + window.innerHeight);
-    console.log("scroll y: " + window.scrollY);
-
+    // check if the user is scrolled to the bottom of the page
     let isScrolled = window.innerHeight + window.scrollY >= document.body.scrollHeight;
 
     let mainDiv = document.createElement('div');
@@ -88,9 +94,11 @@ function addMessageToBody(obj) {
     mainDiv.appendChild(messageBodyP);
     document.getElementById("chatbody").appendChild(mainDiv);
 
+    // messages not sent by the user should be displayed on the right
     if (username != user) {
         mainDiv.classList.add("right");
     }
+    // scroll down if the user was scrolled to the bottom
     if (isScrolled) {
         window.scrollTo(0, document.body.scrollHeight);
     }
